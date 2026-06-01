@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================================
+   Estilos base para FinanceWatch
+   Tema oscuro optimizado para visualización de datos financieros.
+   ========================================================================= */
+
+@layer base {
+  body {
+    @apply bg-surface-dark text-slate-100 antialiased;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+  }
+
+  /* Scrollbar estilizada para navegadores WebKit */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+}
+
+/* =========================================================================
+   Utilidades reutilizables
+   ========================================================================= */
+
+@layer components {
+  /* Tarjeta base con efecto hover */
+  .card-financiera {
+    @apply rounded-xl border border-slate-700/50 bg-surface-card p-5
+           shadow-lg shadow-black/20
+           transition-all duration-200 ease-in-out
+           hover:border-slate-600 hover:shadow-xl hover:shadow-black/30
+           hover:-translate-y-0.5;
+  }
+
+  /* Botón primario */
+  .btn-primario {
+    @apply rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white
+           shadow-md shadow-accent/25
+           transition-all duration-150 ease-in-out
+           hover:bg-blue-600 hover:shadow-lg hover:shadow-accent/40
+           active:scale-95
+           disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-accent;
+  }
+
+  /* Botón secundario (outline) */
+  .btn-secundario {
+    @apply rounded-lg border border-slate-600 bg-transparent px-4 py-2
+           text-sm font-medium text-slate-300
+           transition-all duration-150 ease-in-out
+           hover:border-slate-500 hover:bg-slate-800 hover:text-white
+           active:scale-95;
+  }
+
+  /* Spinner de carga */
+  .spinner {
+    @apply inline-block h-5 w-5 animate-spin rounded-full
+           border-2 border-slate-600 border-t-accent;
+  }
+}
+
+/* =========================================================================
+   Animaciones
+   ========================================================================= */
+
+@layer utilities {
+  /* Animación de entrada para las tarjetas (staggered) */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.4s ease-out forwards;
+  }
+}
