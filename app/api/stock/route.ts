@@ -1,31 +1,29 @@
 /**
  * API Route — /api/stock
  *
- * Proporciona datos bursátiles al frontend usando yfinance (Python)
- * como fuente de datos gratuita.
+ * Proporciona datos bursátiles al frontend usando `yahoo-finance2`
+ * como fuente de datos gratuita (sin necesidad de Python).
  *
  * Endpoints:
  *   GET /api/stock?simbolo=AAPL              → Información actual de una acción
  *   GET /api/stock?simbolo=AAPL&historial=30 → Info + historial de 30 días
  *
  * Estrategia de caché:
- *   Usamos el caché de Next.js (ISR-style) con revalidate para que
- *   los datos se refresquen cada 60 segundos como máximo.
- *   Esto evita llamadas excesivas a Yahoo Finance y mejora el rendimiento.
+ *   Next.js ISR con revalidate de 60s. Durante el horario de mercado,
+ *   los datos se refrescan automáticamente cada minuto.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { obtenerStockInfo, obtenerStockCompleto } from "@/lib/stock-data";
 
 // ---------------------------------------------------------------------------
-// Configuración de caché
+// Configuración de caché (ISR de Next.js)
 // ---------------------------------------------------------------------------
 
-/** Tiempo de vida del caché en segundos (1 minuto).
- *  Yahoo Finance actualiza sus datos cada ~1 minuto en horario de mercado. */
+/** Los datos se revalidan cada 60 segundos como máximo */
 export const revalidate = 60;
 
-/** Simbolos permitidos: solo letras, números, puntos y guiones (máx 10 chars) */
+/** Símbolos permitidos: letras, números, puntos y guiones (máx 10 chars) */
 const SIMBOLO_REGEX = /^[A-Za-z0-9.]{1,10}$/;
 
 // ---------------------------------------------------------------------------
@@ -33,16 +31,16 @@ const SIMBOLO_REGEX = /^[A-Za-z0-9.]{1,10}$/;
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const { searchParams } = new URL(request.url);
-  const simbolo = searchParams.get("simbolo");
-  const historialParam = searchParams.get("historial");
+  const simbolo = request.nextUrl.searchParams.get("simbolo");
+  const historialParam = request.nextUrl.searchParams.get("historial");
 
   // ─── Validación del símbolo ───────────────────────────────────────────
   if (!simbolo) {
     return NextResponse.json(
       {
         error: true,
-        mensaje: "Debes proporcionar un símbolo bursátil. Ejemplo: /api/stock?simbolo=AAPL",
+        mensaje:
+          "Debes proporcionar un símbolo bursátil. Ejemplo: /api/stock?simbolo=AAPL",
       },
       { status: 400 }
     );
@@ -63,7 +61,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const diasHistorial = historialParam ? parseInt(historialParam, 10) || 30 : 0;
 
     if (diasHistorial > 0) {
-      // Modo completo: info + historial en una sola llamada a Python
+      // Modo completo: info actual + historial en paralelo
       const datos = await obtenerStockCompleto(simbolo.toUpperCase(), diasHistorial);
       return NextResponse.json({ error: false, datos });
     }
@@ -73,7 +71,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: false, datos });
   } catch (error: unknown) {
     const mensaje =
-      error instanceof Error ? error.message : "Error desconocido al obtener los datos.";
+      error instanceof Error
+        ? error.message
+        : "Error desconocido al obtener los datos.";
 
     console.error(`[API /api/stock] Error con símbolo "${simbolo}":`, mensaje);
 
